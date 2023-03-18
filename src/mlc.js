@@ -47,14 +47,14 @@ else {
 function createWidget(data, widgetUrl) {
     const { USD, ECU, MLC } = data;
 
-    let w = new ListWidget();
+    const w = new ListWidget();
     w.backgroundColor = new Color('#FFCC00');
     w.setPadding(0, 0, 0, 0);
     w.url = widgetUrl;
 
     // header
 
-    let staticText = w.addText('Informal Currency Exchange in Cuba');
+    const staticText = w.addText('Informal Currency Exchange in Cuba');
     staticText.textColor = new Color('#003399');
     staticText.font = Font.boldSystemFont(16);
     staticText.centerAlignText();
@@ -62,33 +62,91 @@ function createWidget(data, widgetUrl) {
 
     // body
 
-    let image = w.addImage(getImage('usd'));
-    image.imageSize = new Size(33, 33);
-    image.centerAlignImage();
+    const mainStack = w.addStack();
+    mainStack.useDefaultPadding();
 
-    let eurText = w.addText(`1 EUR - ${format(ECU)} CUP`);
-    eurText.textColor = Color.white();
-    eurText.font = Font.boldSystemFont(24);
-    eurText.centerAlignText();
+    const leftStack = mainStack.addStack();
+    leftStack.layoutVertically();
+    leftStack.centerAlignContent();
+    leftStack.borderColor = Color.red();
+    leftStack.borderWidth = 1;
 
-    w.addSpacer(2);
+    // usd
+    const usdStack = leftStack.addStack();
+    usdStack.layoutHorizontally();
+    usdStack.centerAlignContent();
+    usdStack.spacing = 6;
 
-    let usdText = w.addText(`1 USD - ${format(USD)} CUP`);
+    let usdText = usdStack.addText('1 USD');
     usdText.textColor = Color.white();
-    usdText.font = Font.boldSystemFont(24);
-    usdText.centerAlignText();
+    usdText.font = Font.boldSystemFont(22);
 
-    w.addSpacer(2);
+    const usdImage = usdStack.addImage(getImage('usd'));
+    usdImage.imageSize = new Size(36, 36);
 
-    let mlcText = w.addText(`1 MLC - ${format(MLC)} CUP`);
+    usdStack.addSpacer(2);
+
+    // eur
+    const eurStack = leftStack.addStack();
+    eurStack.layoutHorizontally();
+    eurStack.centerAlignContent();
+    eurStack.spacing = 4;
+
+    const eurText = eurStack.addText('1 EUR');
+    eurText.textColor = Color.white();
+    eurText.font = Font.boldSystemFont(22);
+
+    let eurImage = eurStack.addImage(getImage('eur'));
+    eurImage.imageSize = new Size(36, 36);
+
+    eurStack.addSpacer(2);
+
+    // mlc
+    const mlcStack = leftStack.addStack();
+    mlcStack.layoutHorizontally();
+    mlcStack.centerAlignContent();
+    mlcStack.spacing = 4;
+
+    const mlcText = mlcStack.addText('1 MLC');
     mlcText.textColor = Color.white();
-    mlcText.font = Font.boldSystemFont(24);
-    mlcText.centerAlignText();
+    mlcText.font = Font.boldSystemFont(22);
+
+    const mlcImage = mlcStack.addImage(getImage('mlc'));
+    mlcImage.imageSize = new Size(36, 36);
+
+    mlcStack.addSpacer(2);
+
+    const centerStack = mainStack.addStack();
+
+    mainStack.addSpacer(2);
+
+    const rightStack = mainStack.addStack();
+    rightStack.layoutVertically();
+    rightStack.centerAlignContent();
+    rightStack.borderColor = Color.blue();
+    rightStack.borderWidth = 1;
+
+    let usdRateText = rightStack.addText(`${format(USD)} CUP`);
+    usdRateText.textColor = Color.white();
+    usdRateText.font = Font.boldSystemFont(22);
+
+    rightStack.addSpacer(2);
+
+    let eurRateText = rightStack.addText(`${format(ECU)} CUP`);
+    eurRateText.textColor = Color.white();
+    eurRateText.font = Font.boldSystemFont(22);
+
+    rightStack.addSpacer(2);
+
+    let mlcRateText = rightStack.addText(`${format(MLC)} CUP`);
+    mlcRateText.textColor = Color.white();
+    mlcRateText.font = Font.boldSystemFont(22);
+
+    rightStack.addSpacer(2);
 
     w.addSpacer(2);
 
     // footer
-
     const date = new Date();
     const df = new DateFormatter();
     df.useFullDateStyle();
