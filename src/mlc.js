@@ -1,13 +1,9 @@
 /* --------------------------------------------------------------
-Script: mlc.js
-Author: Adriel Dubé
-Version: 1.0.0
-
 Description:
-iOS widget for Mercado Informal de Divisas en Cuba
+Scriptable iOS widget - Informal Currency Exchange in Cuba
 
-Changelog:
-1.0.0: Initialization
+Version:
+1.0.0
 -------------------------------------------------------------- */
 const widgetUrl = 'https://eltoque.com/tasas-de-cambio-de-moneda-en-cuba-hoy';
 const apiUrl = `https://api.cambiocuba.money/api/v1/x-rates-by-date-range?trmi=true&period=1D`;
@@ -27,28 +23,33 @@ const images = [
     },
 ];
 
-const data = await getRates();
-const resources = await getResources();
+async function init() {
+    const data = await getData();
+    const resources = await getImages();
 
-let widget = createWidget(data, widgetUrl);
-if (config.runsInWidget) {
-    // create and show widget
-    Script.setWidget(widget);
-    Script.complete();
-}
-else {
-    widget.presentMedium();
-}
-
-function createWidget(data, widgetUrl) {
-    if (config.widgetFamily === 'small') {
-        return createSmallWidget(data, widgetUrl);
+    const widget = createWidget(data, resources, widgetUrl);
+    if (config.runsInWidget || config.runsInAccessoryWidget) {
+        // create and show widget
+        Script.setWidget(widget);
+        Script.complete();
     }
-    return createMediumWidget(data, widgetUrl);
+    else {
+        widget.presentMedium();
+    }
 }
 
-// Assemble medium widget layout
-function createMediumWidget(data, widgetUrl) {
+function createWidget(data, resources, widgetUrl) {
+    if (config.runsInAccessoryWidget) {
+        return createLockScreenWidget(data, widgetUrl);
+    }
+    else if (config.widgetFamily === 'small') {
+        return createSmallWidget(data, resources, widgetUrl);
+    }
+    return createMediumWidget(data, resources, widgetUrl);
+}
+
+// assemble medium widget layout
+function createMediumWidget(data, resources, widgetUrl) {
     const { USD, ECU, MLC } = data;
 
     const w = new ListWidget();
@@ -64,17 +65,11 @@ function createMediumWidget(data, widgetUrl) {
     // body
     const mainStack = w.addStack();
     mainStack.layoutVertically();
-    mainStack.topAlignContent();
-    mainStack.borderColor = Color.black();
-    //mainStack.borderWidth = 1;
 
     // eur
     const eurStack = mainStack.addStack();
     eurStack.layoutHorizontally();
     eurStack.centerAlignContent();
-    eurStack.borderColor = Color.red();
-    //eurStack.borderWidth = 1;
-    //eurStack.spacing = 6;
 
     eurStack.addSpacer();
 
@@ -84,7 +79,7 @@ function createMediumWidget(data, widgetUrl) {
 
     eurStack.addSpacer(10);
 
-    const eurImage = eurStack.addImage(getImage('eur'));
+    const eurImage = eurStack.addImage(getImage(resources, 'eur'));
     eurImage.imageSize = new Size(36, 36);
 
     eurStack.addSpacer(8);
@@ -99,8 +94,6 @@ function createMediumWidget(data, widgetUrl) {
     const usdStack = mainStack.addStack();
     usdStack.layoutHorizontally();
     usdStack.centerAlignContent();
-    usdStack.borderColor = Color.red();
-    //usdStack.borderWidth = 1;
     usdStack.spacing = 8;
 
     usdStack.addSpacer();
@@ -109,7 +102,7 @@ function createMediumWidget(data, widgetUrl) {
     usdText.textColor = Color.white();
     usdText.font = Font.boldMonospacedSystemFont(22);
 
-    const usdImage = usdStack.addImage(getImage('usd'));
+    const usdImage = usdStack.addImage(getImage(resources, 'usd'));
     usdImage.imageSize = new Size(36, 36);
 
     const usdRateText = usdStack.addText(`${format(USD)} CUP`);
@@ -122,8 +115,6 @@ function createMediumWidget(data, widgetUrl) {
     const mlcStack = mainStack.addStack();
     mlcStack.layoutHorizontally();
     mlcStack.centerAlignContent();
-    mlcStack.borderColor = Color.red();
-    //mlcStack.borderWidth = 1;
     mlcStack.spacing = 8;
 
     mlcStack.addSpacer();
@@ -132,7 +123,7 @@ function createMediumWidget(data, widgetUrl) {
     mlcText.textColor = Color.white();
     mlcText.font = Font.boldMonospacedSystemFont(22);
 
-    const mlcImage = mlcStack.addImage(getImage('mlc'));
+    const mlcImage = mlcStack.addImage(getImage(resources, 'mlc'));
     mlcImage.imageSize = new Size(36, 36);
 
     const mlcRateText = mlcStack.addText(`${format(MLC)} CUP`);
@@ -159,8 +150,8 @@ function createMediumWidget(data, widgetUrl) {
     return w;
 }
 
-// Assemble small widget layout
-function createSmallWidget(data, widgetUrl) {
+// assemble small widget layout
+function createSmallWidget(data, resources, widgetUrl) {
     const { USD, ECU, MLC } = data;
 
     const w = new ListWidget();
@@ -169,7 +160,7 @@ function createSmallWidget(data, widgetUrl) {
     w.url = widgetUrl;
 
     // header
-    w.addSpacer(2);
+    w.addSpacer(8);
 
     const staticText = w.addText('Currency');
     staticText.textColor = new Color('#003399');
@@ -181,24 +172,18 @@ function createSmallWidget(data, widgetUrl) {
     exchangeText.font = Font.boldSystemFont(16);
     exchangeText.leftAlignText();
 
-    w.addSpacer(4);
-
     // body
     const mainStack = w.addStack();
     mainStack.layoutVertically();
     mainStack.centerAlignContent();
-    mainStack.borderColor = Color.black();
-    //mainStack.borderWidth = 1;
 
     // eur
     const eurStack = mainStack.addStack();
     eurStack.layoutHorizontally();
     eurStack.centerAlignContent();
-    eurStack.borderColor = Color.red();
-    //eurStack.borderWidth = 1;
     eurStack.spacing = 2;
 
-    const eurImage = eurStack.addImage(getImage('eur'));
+    const eurImage = eurStack.addImage(getImage(resources, 'eur'));
     eurImage.imageSize = new Size(33, 33);
 
     const eurRateText = eurStack.addText(`${format(ECU, 0)} CUP`);
@@ -211,11 +196,9 @@ function createSmallWidget(data, widgetUrl) {
     const usdStack = mainStack.addStack();
     usdStack.layoutHorizontally();
     usdStack.centerAlignContent();
-    usdStack.borderColor = Color.red();
-    //usdStack.borderWidth = 1;
     usdStack.spacing = 2;
 
-    const usdImage = usdStack.addImage(getImage('usd'));
+    const usdImage = usdStack.addImage(getImage(resources, 'usd'));
     usdImage.imageSize = new Size(33, 33);
 
     const usdRateText = usdStack.addText(`${format(USD, 0)} CUP`);
@@ -228,11 +211,9 @@ function createSmallWidget(data, widgetUrl) {
     const mlcStack = mainStack.addStack();
     mlcStack.layoutHorizontally();
     mlcStack.centerAlignContent();
-    mlcStack.borderColor = Color.red();
-    //mlcStack.borderWidth = 1;
     mlcStack.spacing = 2;
 
-    const mlcImage = mlcStack.addImage(getImage('mlc'));
+    const mlcImage = mlcStack.addImage(getImage(resources, 'mlc'));
     mlcImage.imageSize = new Size(33, 33);
 
     const mlcRateText = mlcStack.addText(`${format(MLC, 0)} CUP`);
@@ -253,6 +234,63 @@ function createSmallWidget(data, widgetUrl) {
     dateText.font = Font.semiboldSystemFont(8);
     dateText.centerAlignText();
 
+    w.addSpacer(8);
+
+    return w;
+}
+
+// assemble lock screen widget layout
+function createLockScreenWidget(data, widgetUrl) {
+    const { USD, ECU, MLC } = data;
+
+    const w = new ListWidget();
+    w.url = widgetUrl;
+
+    // eur
+    const eurStack = w.addStack();
+    eurStack.layoutHorizontally();
+    eurStack.centerAlignContent();
+
+    const eurText = eurStack.addText('EUR');
+    eurText.textColor = Color.white();
+    eurText.font = Font.boldSystemFont(14);
+
+    eurStack.addSpacer();
+
+    const eurRateText = eurStack.addText(`${format(ECU, 0)} CUP`);
+    eurRateText.textColor = Color.white();
+    eurRateText.font = Font.regularSystemFont(14);
+
+    // usd
+    const usdStack = w.addStack();
+    usdStack.layoutHorizontally();
+    usdStack.centerAlignContent();
+
+    const usdText = usdStack.addText('USD');
+    usdText.textColor = Color.white();
+    usdText.font = Font.boldSystemFont(14);
+
+    usdStack.addSpacer();
+
+    const usdRateText = usdStack.addText(`${format(USD, 0)} CUP`);
+    usdRateText.textColor = Color.white();
+    usdRateText.font = Font.regularSystemFont(14);
+
+    // mlc
+    const mlcStack = w.addStack();
+    mlcStack.layoutHorizontally();
+    mlcStack.centerAlignContent();
+
+    const mlcText = mlcStack.addText('MLC');
+    mlcText.textColor = Color.white();
+    mlcText.font = Font.boldSystemFont(14);
+
+    mlcStack.addSpacer();
+
+    const mlcRateText = mlcStack.addText(`${format(MLC, 0)} CUP`);
+    mlcRateText.textColor = Color.white();
+    mlcRateText.font = Font.regularSystemFont(14);
+
     return w;
 }
 
@@ -266,7 +304,7 @@ async function getRate(currency) {
     return avg;
 }
 
-async function getRates() {
+async function getData() {
     const rates = {};
     for (const currency of currencies) {
         const r = await getRate(currency);
@@ -275,25 +313,25 @@ async function getRates() {
     return rates;
 }
 
-async function getResources() {
+async function getImages() {
     const result = {};
-
     for (const r of images) {
         const { name, url } = r;
-        console.log(name, url);
         const req = new Request(url);
         const res = await req.loadImage();
         result[name] = res;
     }
-
     return result;
 }
 
-function getImage(id) {
+function getImage(resources, id) {
     return resources[id];
 }
 
-function format(v, fractionDigits = 2) {
-    return Math.round(Number.parseFloat(v)).toFixed(fractionDigits);
+function format(value, fractionDigits = 2) {
+    return Math.round(Number.parseFloat(value)).toFixed(fractionDigits);
 }
+
+//initialize
+await init();
 
