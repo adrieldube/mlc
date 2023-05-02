@@ -24,17 +24,23 @@ const images = [
 ];
 
 async function init() {
-    const data = await getData();
-    const resources = await getImages();
-
-    const widget = createWidget(data, resources, widgetUrl);
-    if (config.runsInWidget || config.runsInAccessoryWidget) {
-        // create and show widget
-        Script.setWidget(widget);
-        Script.complete();
-    }
-    else {
-        widget.presentMedium();
+    let widget;
+    try {
+        const data = await getData();
+        const resources = await getImages();
+        widget = createWidget(data, resources, widgetUrl);
+    } catch (err) {
+        console.error(`Error getting widget data. ${err}`);
+        widget = createEmptyWidget();
+    } finally {
+        if (config.runsInWidget || config.runsInAccessoryWidget) {
+            // create and show widget
+            Script.setWidget(widget);
+            Script.complete();
+        }
+        else {
+            widget.presentMedium();
+        }
     }
 }
 
@@ -46,6 +52,32 @@ function createWidget(data, resources, widgetUrl) {
         return createSmallWidget(data, resources, widgetUrl);
     }
     return createMediumWidget(data, resources, widgetUrl);
+}
+
+// assemble empty widget layout
+function createEmptyWidget() {
+    const w = new ListWidget();
+    w.backgroundColor = new Color('#FFCC00');
+    w.url = widgetUrl;
+
+    w.addSpacer();
+
+    const infoText = w.addText('No currency exchange data');
+    infoText.textColor = Color.white();
+    infoText.font = Font.boldMonospacedSystemFont(20);
+    infoText.centerAlignText();
+
+    const runsInSmallWidget = config.widgetFamily === 'small';
+
+    if (runsInSmallWidget || config.runsInAccessoryWidget) {
+        const fontSize = runsInSmallWidget ? 18 : 14;
+        infoText.font = Font.boldMonospacedSystemFont(fontSize);
+        infoText.leftAlignText();
+    }
+
+    w.addSpacer();
+
+    return w;
 }
 
 // assemble medium widget layout
